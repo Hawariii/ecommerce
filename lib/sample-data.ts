@@ -1,0 +1,245 @@
+import type { Category, DashboardStat, OrderSummary, Product } from "@/types";
+
+export const categories: Category[] = [
+  {
+    id: "cat-fashion",
+    name: "Fashion",
+    slug: "fashion",
+    description: "Pakaian, sepatu, dan aksesori trend terbaru.",
+    image: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=1200&auto=format&fit=crop",
+    productCount: 1240,
+  },
+  {
+    id: "cat-gadget",
+    name: "Elektronik",
+    slug: "elektronik",
+    description: "Gadget harian dengan performa tinggi.",
+    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=1200&auto=format&fit=crop",
+    productCount: 842,
+  },
+  {
+    id: "cat-home",
+    name: "Rumah",
+    slug: "rumah",
+    description: "Peralatan rumah tangga dan dekorasi.",
+    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop",
+    productCount: 430,
+  },
+  {
+    id: "cat-beauty",
+    name: "Beauty",
+    slug: "beauty",
+    description: "Skincare dan makeup pilihan.",
+    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1200&auto=format&fit=crop",
+    productCount: 680,
+  },
+];
+
+export const products: Product[] = [
+  {
+    id: "prod-1",
+    name: "Aurora Pro Wireless Headset",
+    slug: "aurora-pro-wireless-headset",
+    description:
+      "Headset ANC premium dengan driver 40mm, low-latency mode, dan baterai hingga 38 jam.",
+    price: 1299000,
+    compareAtPrice: 1599000,
+    flashSalePrice: 1149000,
+    stock: 24,
+    soldCount: 428,
+    rating: 4.8,
+    reviewCount: 136,
+    featured: true,
+    flashSale: true,
+    category: "Elektronik",
+    categorySlug: "elektronik",
+    tags: ["audio", "gaming", "wireless"],
+    images: [
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=1200&auto=format&fit=crop",
+    ],
+    reviews: [
+      {
+        id: "rev-1",
+        userName: "Raka",
+        rating: 5,
+        comment: "Bass rapih, nyaman dipakai lama, dan pairing-nya cepat.",
+        createdAt: "2026-03-28",
+      },
+      {
+        id: "rev-2",
+        userName: "Dini",
+        rating: 4,
+        comment: "ANC mantap buat commute, cuma casing-nya agak besar.",
+        createdAt: "2026-03-19",
+      },
+    ],
+  },
+  {
+    id: "prod-2",
+    name: "LunaFlow Running Shoes",
+    slug: "lunaflow-running-shoes",
+    description:
+      "Sepatu lari ringan dengan cushioning responsif dan upper breathable untuk lari harian.",
+    price: 749000,
+    compareAtPrice: 899000,
+    stock: 52,
+    soldCount: 921,
+    rating: 4.7,
+    reviewCount: 242,
+    featured: true,
+    category: "Fashion",
+    categorySlug: "fashion",
+    tags: ["sport", "sepatu", "running"],
+    images: [
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=1200&auto=format&fit=crop",
+    ],
+    reviews: [
+      {
+        id: "rev-3",
+        userName: "Aji",
+        rating: 5,
+        comment: "Sol empuk, enak dipakai interval run dan daily walk.",
+        createdAt: "2026-03-30",
+      },
+    ],
+  },
+  {
+    id: "prod-3",
+    name: "Silk Repair Night Serum",
+    slug: "silk-repair-night-serum",
+    description:
+      "Serum malam dengan ceramide dan peptide untuk barrier repair dan hidrasi intens.",
+    price: 289000,
+    compareAtPrice: 349000,
+    flashSalePrice: 239000,
+    stock: 89,
+    soldCount: 1650,
+    rating: 4.9,
+    reviewCount: 511,
+    featured: true,
+    flashSale: true,
+    category: "Beauty",
+    categorySlug: "beauty",
+    tags: ["skincare", "serum", "night-routine"],
+    images: [
+      "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1612817288484-6f916006741a?q=80&w=1200&auto=format&fit=crop",
+    ],
+    reviews: [
+      {
+        id: "rev-4",
+        userName: "Nadia",
+        rating: 5,
+        comment: "Teksturnya nyaman dan bikin kulit lebih kalem seminggu pemakaian.",
+        createdAt: "2026-03-24",
+      },
+    ],
+  },
+  {
+    id: "prod-4",
+    name: "Nordic Oak Side Table",
+    slug: "nordic-oak-side-table",
+    description:
+      "Meja samping minimalis dengan finishing natural oak dan storage tersembunyi.",
+    price: 559000,
+    stock: 11,
+    soldCount: 188,
+    rating: 4.6,
+    reviewCount: 73,
+    category: "Rumah",
+    categorySlug: "rumah",
+    tags: ["furniture", "living-room", "wood"],
+    images: [
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1484101403633-562f891dc89a?q=80&w=1200&auto=format&fit=crop",
+    ],
+    reviews: [],
+  },
+  {
+    id: "prod-5",
+    name: "PixelFold Smart Lamp",
+    slug: "pixelfold-smart-lamp",
+    description:
+      "Lampu meja lipat dengan pengaturan suhu warna, touch dimmer, dan USB-C charging.",
+    price: 419000,
+    compareAtPrice: 499000,
+    stock: 34,
+    soldCount: 320,
+    rating: 4.5,
+    reviewCount: 94,
+    featured: true,
+    category: "Rumah",
+    categorySlug: "rumah",
+    tags: ["lighting", "desk-setup", "smart-home"],
+    images: [
+      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=1200&auto=format&fit=crop",
+    ],
+    reviews: [],
+  },
+  {
+    id: "prod-6",
+    name: "Nova 5G Smartphone",
+    slug: "nova-5g-smartphone",
+    description:
+      "Smartphone AMOLED 144Hz, kamera 50MP OIS, fast charging 80W, dan chipset flagship.",
+    price: 6999000,
+    compareAtPrice: 7499000,
+    stock: 17,
+    soldCount: 286,
+    rating: 4.8,
+    reviewCount: 129,
+    flashSale: true,
+    flashSalePrice: 6499000,
+    category: "Elektronik",
+    categorySlug: "elektronik",
+    tags: ["smartphone", "mobile", "5g"],
+    images: [
+      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1598327105666-5b89351aff97?q=80&w=1200&auto=format&fit=crop",
+    ],
+    reviews: [],
+  },
+];
+
+export const orderHistory: OrderSummary[] = [
+  {
+    id: "INV-2026-041",
+    createdAt: "2026-04-03",
+    status: "Shipped",
+    total: 1538000,
+    items: 2,
+  },
+  {
+    id: "INV-2026-032",
+    createdAt: "2026-03-21",
+    status: "Delivered",
+    total: 307000,
+    items: 1,
+  },
+];
+
+export const dashboardStats: DashboardStat[] = [
+  {
+    label: "Revenue Bulan Ini",
+    value: "Rp 248,4 jt",
+    description: "+18.2% dibanding bulan lalu",
+  },
+  {
+    label: "Pesanan Aktif",
+    value: "1.248",
+    description: "76 order butuh diproses hari ini",
+  },
+  {
+    label: "Produk Aktif",
+    value: "3.402",
+    description: "124 item low stock",
+  },
+  {
+    label: "Pelanggan Baru",
+    value: "812",
+    description: "Akuisisi naik 9.4%",
+  },
+];
