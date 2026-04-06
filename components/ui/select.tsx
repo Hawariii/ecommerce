@@ -1,8 +1,9 @@
+import type { SelectHTMLAttributes } from "react";
 import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
+type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   options: { label: string; value: string }[];
 };
 

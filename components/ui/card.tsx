@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { cn } from "@/lib/utils";
 
 export function Card({
@@ -5,7 +7,7 @@ export function Card({
   children,
 }: {
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className={cn("rounded-[28px] border border-slate-200 bg-white shadow-sm", className)}>

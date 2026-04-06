@@ -21,7 +21,7 @@ const fallbackUsers = [
 ];
 
 export const authOptions: NextAuthOptions = {
-  adapter: process.env.DATABASE_URL ? PrismaAdapter(prisma) : undefined,
+  adapter: prisma ? PrismaAdapter(prisma) : undefined,
   session: {
     strategy: "jwt",
   },
@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
         const email = credentials?.email?.toLowerCase();
         if (!email) return null;
 
-        if (process.env.DATABASE_URL) {
+        if (prisma) {
           const user = await prisma.user.findUnique({
             where: { email },
           });
