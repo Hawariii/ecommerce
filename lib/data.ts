@@ -15,6 +15,45 @@ type ProductQuery = {
   rating?: number;
 };
 
+function logDataError(scope: string, error: unknown) {
+  console.error(`[data:${scope}]`, error);
+}
+
+function getFallbackProducts(query: ProductQuery = {}) {
+  const {
+    page = 1,
+    search = "",
+    category,
+    sort = "terlaris",
+    minPrice = 0,
+    maxPrice = Number.MAX_SAFE_INTEGER,
+    rating = 0,
+  } = query;
+
+  const filtered = products
+    .filter((product) => product.name.toLowerCase().includes(search.toLowerCase()))
+    .filter((product) => (category ? product.categorySlug === category : true))
+    .filter((product) => product.price >= minPrice && product.price <= maxPrice)
+    .filter((product) => product.rating >= rating);
+
+  const sorted = filtered.sort((a, b) => {
+    if (sort === "termurah") return a.price - b.price;
+    if (sort === "terbaru") return b.id.localeCompare(a.id);
+    return b.soldCount - a.soldCount;
+  });
+
+  const pageSize = 4;
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const paginated = sorted.slice((page - 1) * pageSize, page * pageSize);
+
+  return {
+    items: paginated,
+    total: sorted.length,
+    totalPages,
+    currentPage: page,
+  };
+}
+
 function mapReview(review: {
   id: string;
   rating: number;
@@ -92,23 +131,27 @@ export async function getCategories() {
   cacheTag("categories");
 
   if (prisma) {
-    const categoryList = await prisma.category.findMany({
-      include: {
-        _count: {
-          select: { products: true },
+    try {
+      const categoryList = await prisma.category.findMany({
+        include: {
+          _count: {
+            select: { products: true },
+          },
         },
-      },
-      orderBy: { name: "asc" },
-    });
+        orderBy: { name: "asc" },
+      });
 
-    return categoryList.map<Category>((category) => ({
-      id: category.id,
-      name: category.name,
-      slug: category.slug,
-      description: category.description ?? "",
-      image: category.image ?? "",
-      productCount: category._count.products,
-    }));
+      return categoryList.map<Category>((category) => ({
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+        description: category.description ?? "",
+        image: category.image ?? "",
+        productCount: category._count.products,
+      }));
+    } catch (error) {
+      logDataError("getCategories", error);
+    }
   }
 
   return categories;
@@ -120,13 +163,17 @@ export async function getSearchSuggestions() {
   cacheTag("products");
 
   if (prisma) {
-    const items = await prisma.product.findMany({
-      select: { name: true },
-      orderBy: [{ soldCount: "desc" }, { rating: "desc" }],
-      take: 8,
-    });
+    try {
+      const items = await prisma.product.findMany({
+        select: { name: true },
+        orderBy: [{ soldCount: "desc" }, { rating: "desc" }],
+        take: 8,
+      });
 
-    return items.map((item) => item.name);
+      return items.map((item) => item.name);
+    } catch (error) {
+      logDataError("getSearchSuggestions", error);
+    }
   }
 
   return products.slice(0, 8).map((product) => product.name);
@@ -138,33 +185,37 @@ export async function getHomePageData() {
   cacheTag("products");
 
   if (prisma) {
-    const [categoryList, featuredProducts, flashSaleProducts, recommendationProducts] = await Promise.all([
-      getCategories(),
-      prisma.product.findMany({
-        where: { featured: true },
-        include: { category: true },
-        take: 4,
-        orderBy: [{ soldCount: "desc" }],
-      }),
-      prisma.product.findMany({
-        where: { flashSale: true },
-        include: { category: true },
-        take: 4,
-        orderBy: [{ soldCount: "desc" }],
-      }),
-      prisma.product.findMany({
-        include: { category: true },
-        take: 4,
-        orderBy: [{ rating: "desc" }, { reviewCount: "desc" }],
-      }),
-    ]);
+    try {
+      const [categoryList, featuredProducts, flashSaleProducts, recommendationProducts] = await Promise.all([
+        getCategories(),
+        prisma.product.findMany({
+          where: { featured: true },
+          include: { category: true },
+          take: 4,
+          orderBy: [{ soldCount: "desc" }],
+        }),
+        prisma.product.findMany({
+          where: { flashSale: true },
+          include: { category: true },
+          take: 4,
+          orderBy: [{ soldCount: "desc" }],
+        }),
+        prisma.product.findMany({
+          include: { category: true },
+          take: 4,
+          orderBy: [{ rating: "desc" }, { reviewCount: "desc" }],
+        }),
+      ]);
 
-    return {
-      categories: categoryList,
-      featuredProducts: featuredProducts.map(mapProduct),
-      flashSaleProducts: flashSaleProducts.map(mapProduct),
-      recommendationProducts: recommendationProducts.map(mapProduct),
-    };
+      return {
+        categories: categoryList,
+        featuredProducts: featuredProducts.map(mapProduct),
+        flashSaleProducts: flashSaleProducts.map(mapProduct),
+        recommendationProducts: recommendationProducts.map(mapProduct),
+      };
+    } catch (error) {
+      logDataError("getHomePageData", error);
+    }
   }
 
   return {
@@ -180,85 +231,60 @@ export async function getProducts(query: ProductQuery = {}) {
   cacheLife("minutes");
   cacheTag("products");
 
-  const {
-    page = 1,
-    search = "",
-    category,
-    sort = "terlaris",
-    minPrice = 0,
-    maxPrice = Number.MAX_SAFE_INTEGER,
-    rating = 0,
-  } = query;
+  const { page = 1, search = "", category, sort = "terlaris", minPrice = 0, maxPrice = Number.MAX_SAFE_INTEGER, rating = 0 } = query;
 
   if (prisma) {
-    const pageSize = 4;
-    const where = {
-      name: {
-        contains: search,
-        mode: "insensitive" as const,
-      },
-      category: category
-        ? {
-            slug: category,
-          }
-        : undefined,
-      price: {
-        gte: minPrice,
-        lte: maxPrice,
-      },
-      rating: {
-        gte: rating,
-      },
-    };
+    try {
+      const pageSize = 4;
+      const where = {
+        name: {
+          contains: search,
+          mode: "insensitive" as const,
+        },
+        category: category
+          ? {
+              slug: category,
+            }
+          : undefined,
+        price: {
+          gte: minPrice,
+          lte: maxPrice,
+        },
+        rating: {
+          gte: rating,
+        },
+      };
 
-    const orderBy =
-      sort === "termurah"
-        ? [{ price: "asc" as const }]
-        : sort === "terbaru"
-          ? [{ createdAt: "desc" as const }]
-          : [{ soldCount: "desc" as const }];
+      const orderBy =
+        sort === "termurah"
+          ? [{ price: "asc" as const }]
+          : sort === "terbaru"
+            ? [{ createdAt: "desc" as const }]
+            : [{ soldCount: "desc" as const }];
 
-    const [items, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: { category: true },
-        orderBy,
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      prisma.product.count({ where }),
-    ]);
+      const [items, total] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          include: { category: true },
+          orderBy,
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+        prisma.product.count({ where }),
+      ]);
 
-    return {
-      items: items.map(mapProduct),
-      total,
-      totalPages: Math.max(1, Math.ceil(total / pageSize)),
-      currentPage: page,
-    };
+      return {
+        items: items.map(mapProduct),
+        total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+        currentPage: page,
+      };
+    } catch (error) {
+      logDataError("getProducts", error);
+    }
   }
 
-  const filtered = products
-    .filter((product) => product.name.toLowerCase().includes(search.toLowerCase()))
-    .filter((product) => (category ? product.categorySlug === category : true))
-    .filter((product) => product.price >= minPrice && product.price <= maxPrice)
-    .filter((product) => product.rating >= rating);
-
-  const sorted = filtered.sort((a, b) => {
-    if (sort === "termurah") return a.price - b.price;
-    if (sort === "terbaru") return b.id.localeCompare(a.id);
-    return b.soldCount - a.soldCount;
-  });
-
-  const pageSize = 4;
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const paginated = sorted.slice((page - 1) * pageSize, page * pageSize);
-
-  return {
-    items: paginated,
-    total: sorted.length,
-    totalPages,
-    currentPage: page,
-  };
+  return getFallbackProducts(query);
 }
 
 export async function getProductBySlug(slug: string) {
@@ -267,22 +293,26 @@ export async function getProductBySlug(slug: string) {
   cacheTag("products");
 
   if (prisma) {
-    const product = await prisma.product.findUnique({
-      where: { slug },
-      include: {
-        category: true,
-        reviews: {
-          include: {
-            user: {
-              select: { name: true },
+    try {
+      const product = await prisma.product.findUnique({
+        where: { slug },
+        include: {
+          category: true,
+          reviews: {
+            include: {
+              user: {
+                select: { name: true },
+              },
             },
+            orderBy: { createdAt: "desc" },
           },
-          orderBy: { createdAt: "desc" },
         },
-      },
-    });
+      });
 
-    return product ? mapProduct(product) : null;
+      return product ? mapProduct(product) : null;
+    } catch (error) {
+      logDataError("getProductBySlug", error);
+    }
   }
 
   return products.find((product) => product.slug === slug) ?? null;
@@ -294,21 +324,25 @@ export async function getRelatedProducts(categorySlug: string, currentSlug: stri
   cacheTag("products");
 
   if (prisma) {
-    const relatedProducts = await prisma.product.findMany({
-      where: {
-        category: {
-          slug: categorySlug,
+    try {
+      const relatedProducts = await prisma.product.findMany({
+        where: {
+          category: {
+            slug: categorySlug,
+          },
+          NOT: {
+            slug: currentSlug,
+          },
         },
-        NOT: {
-          slug: currentSlug,
-        },
-      },
-      include: { category: true },
-      take: 4,
-      orderBy: [{ soldCount: "desc" }],
-    });
+        include: { category: true },
+        take: 4,
+        orderBy: [{ soldCount: "desc" }],
+      });
 
-    return relatedProducts.map(mapProduct);
+      return relatedProducts.map(mapProduct);
+    } catch (error) {
+      logDataError("getRelatedProducts", error);
+    }
   }
 
   return products
@@ -318,23 +352,27 @@ export async function getRelatedProducts(categorySlug: string, currentSlug: stri
 
 export async function getOrderHistory() {
   if (prisma) {
-    const orders = await prisma.order.findMany({
-      include: {
-        _count: {
-          select: { items: true },
+    try {
+      const orders = await prisma.order.findMany({
+        include: {
+          _count: {
+            select: { items: true },
+          },
         },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    });
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      });
 
-    return orders.map<OrderSummary>((order) => ({
-      id: order.id,
-      createdAt: order.createdAt.toISOString().slice(0, 10),
-      status: mapOrderStatus(order.status),
-      total: order.total.toNumber(),
-      items: order._count.items,
-    }));
+      return orders.map<OrderSummary>((order) => ({
+        id: order.id,
+        createdAt: order.createdAt.toISOString().slice(0, 10),
+        status: mapOrderStatus(order.status),
+        total: order.total.toNumber(),
+        items: order._count.items,
+      }));
+    } catch (error) {
+      logDataError("getOrderHistory", error);
+    }
   }
 
   return orderHistory;
@@ -342,24 +380,28 @@ export async function getOrderHistory() {
 
 export async function getUserOrderHistory(userId?: string) {
   if (prisma && userId) {
-    const orders = await prisma.order.findMany({
-      where: { userId },
-      include: {
-        _count: {
-          select: { items: true },
+    try {
+      const orders = await prisma.order.findMany({
+        where: { userId },
+        include: {
+          _count: {
+            select: { items: true },
+          },
         },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    });
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      });
 
-    return orders.map<OrderSummary>((order) => ({
-      id: order.id,
-      createdAt: order.createdAt.toISOString().slice(0, 10),
-      status: mapOrderStatus(order.status),
-      total: order.total.toNumber(),
-      items: order._count.items,
-    }));
+      return orders.map<OrderSummary>((order) => ({
+        id: order.id,
+        createdAt: order.createdAt.toISOString().slice(0, 10),
+        status: mapOrderStatus(order.status),
+        total: order.total.toNumber(),
+        items: order._count.items,
+      }));
+    } catch (error) {
+      logDataError("getUserOrderHistory", error);
+    }
   }
 
   return orderHistory;
@@ -367,50 +409,54 @@ export async function getUserOrderHistory(userId?: string) {
 
 export async function getDashboardStats() {
   if (prisma) {
-    const [revenueAgg, activeOrders, productCount, newUsers] = await Promise.all([
-      prisma.order.aggregate({
-        _sum: { total: true },
-        where: {
-          status: {
-            in: ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"],
+    try {
+      const [revenueAgg, activeOrders, productCount, newUsers] = await Promise.all([
+        prisma.order.aggregate({
+          _sum: { total: true },
+          where: {
+            status: {
+              in: ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"],
+            },
           },
-        },
-      }),
-      prisma.order.count({
-        where: {
-          status: {
-            in: ["PENDING", "PAID", "PROCESSING", "SHIPPED"],
+        }),
+        prisma.order.count({
+          where: {
+            status: {
+              in: ["PENDING", "PAID", "PROCESSING", "SHIPPED"],
+            },
           },
+        }),
+        prisma.product.count(),
+        prisma.user.count(),
+      ]);
+
+      const revenue = revenueAgg._sum.total?.toNumber() ?? 0;
+
+      return [
+        {
+          label: "Revenue Total",
+          value: formatCurrency(revenue),
+          description: "Akumulasi order non-cancelled di database",
         },
-      }),
-      prisma.product.count(),
-      prisma.user.count(),
-    ]);
-
-    const revenue = revenueAgg._sum.total?.toNumber() ?? 0;
-
-    return [
-      {
-        label: "Revenue Total",
-        value: formatCurrency(revenue),
-        description: "Akumulasi order non-cancelled di database",
-      },
-      {
-        label: "Pesanan Aktif",
-        value: String(activeOrders),
-        description: "Order yang masih berjalan",
-      },
-      {
-        label: "Produk Aktif",
-        value: String(productCount),
-        description: "Total katalog yang tersedia",
-      },
-      {
-        label: "Pelanggan",
-        value: String(newUsers),
-        description: "Total user yang tersimpan",
-      },
-    ] satisfies DashboardStat[];
+        {
+          label: "Pesanan Aktif",
+          value: String(activeOrders),
+          description: "Order yang masih berjalan",
+        },
+        {
+          label: "Produk Aktif",
+          value: String(productCount),
+          description: "Total katalog yang tersedia",
+        },
+        {
+          label: "Pelanggan",
+          value: String(newUsers),
+          description: "Total user yang tersimpan",
+        },
+      ] satisfies DashboardStat[];
+    } catch (error) {
+      logDataError("getDashboardStats", error);
+    }
   }
 
   return dashboardStats;
@@ -418,13 +464,17 @@ export async function getDashboardStats() {
 
 export async function getAdminProducts() {
   if (prisma) {
-    const items = await prisma.product.findMany({
-      include: { category: true },
-      orderBy: [{ createdAt: "desc" }],
-      take: 12,
-    });
+    try {
+      const items = await prisma.product.findMany({
+        include: { category: true },
+        orderBy: [{ createdAt: "desc" }],
+        take: 12,
+      });
 
-    return items.map(mapProduct);
+      return items.map(mapProduct);
+    } catch (error) {
+      logDataError("getAdminProducts", error);
+    }
   }
 
   return products;
@@ -432,16 +482,20 @@ export async function getAdminProducts() {
 
 export async function getAdminUsers() {
   if (prisma) {
-    return prisma.user.findMany({
-      orderBy: [{ createdAt: "desc" }],
-      take: 20,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-      },
-    });
+    try {
+      return await prisma.user.findMany({
+        orderBy: [{ createdAt: "desc" }],
+        take: 20,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      });
+    } catch (error) {
+      logDataError("getAdminUsers", error);
+    }
   }
 
   return [
@@ -456,31 +510,39 @@ export async function getWishlistProducts(userId?: string) {
   cacheTag("wishlist");
 
   if (prisma && userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        wishlist: {
-          include: { category: true },
-          orderBy: [{ createdAt: "desc" }],
-          take: 8,
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          wishlist: {
+            include: { category: true },
+            orderBy: [{ createdAt: "desc" }],
+            take: 8,
+          },
         },
-      },
-    });
+      });
 
-    if (user?.wishlist.length) {
-      return user.wishlist.map(mapProduct);
+      if (user?.wishlist.length) {
+        return user.wishlist.map(mapProduct);
+      }
+    } catch (error) {
+      logDataError("getWishlistProducts:user", error);
     }
   }
 
   if (prisma) {
-    const items = await prisma.product.findMany({
-      where: { featured: true },
-      include: { category: true },
-      take: 4,
-      orderBy: [{ rating: "desc" }],
-    });
+    try {
+      const items = await prisma.product.findMany({
+        where: { featured: true },
+        include: { category: true },
+        take: 4,
+        orderBy: [{ rating: "desc" }],
+      });
 
-    return items.map(mapProduct);
+      return items.map(mapProduct);
+    } catch (error) {
+      logDataError("getWishlistProducts:fallback", error);
+    }
   }
 
   return products.slice(0, 4);
