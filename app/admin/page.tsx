@@ -9,9 +9,9 @@ export default async function AdminPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
-      <div className="overflow-hidden rounded-[36px] border border-white/70 bg-[linear-gradient(135deg,#0f172a,#1e293b_55%,#334155)] p-8 text-white shadow-[0_25px_70px_-35px_rgba(15,23,42,0.55)]">
+      <div className="overflow-hidden rounded-[28px] border border-white/70 bg-[linear-gradient(135deg,#0f172a,#1e293b_55%,#334155)] p-5 text-white shadow-[0_25px_70px_-35px_rgba(15,23,42,0.55)] sm:rounded-[36px] sm:p-8">
         <p className="text-sm uppercase tracking-[0.2em] text-orange-300">Admin</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">Dashboard operasional</h1>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Dashboard operasional</h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
           Satu panel untuk memantau revenue, inventory, user, dan pipeline order. Layout ini sengaja dibuat kontras
           agar area admin terasa berbeda dari storefront.

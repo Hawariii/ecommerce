@@ -44,7 +44,7 @@ export default async function ProductDetailPage({ params }: Props) {
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-12 px-4 py-10 sm:px-6 lg:px-8">
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-4">
-          <div className="relative h-[440px] overflow-hidden rounded-[32px] border border-white/70 bg-white/85 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.35)]">
+          <div className="relative h-[300px] overflow-hidden rounded-[28px] border border-white/70 bg-white/85 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.35)] sm:h-[440px] sm:rounded-[32px]">
             <Image src={product.images[0]} alt={product.name} fill className="object-cover" priority />
             <div className="absolute left-5 top-5">
               <Badge className="bg-white/85 text-slate-700">{product.tags[0] ?? "featured"}</Badge>
@@ -52,10 +52,7 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             {product.images.map((image) => (
-              <div
-                key={image}
-                className="relative h-40 overflow-hidden rounded-[24px] border border-white/70 bg-white/80 shadow-sm"
-              >
+              <div key={image} className="relative h-28 overflow-hidden rounded-[20px] border border-white/70 bg-white/80 shadow-sm sm:h-40 sm:rounded-[24px]">
                 <Image src={image} alt={product.name} fill className="object-cover" />
               </div>
             ))}
@@ -65,8 +62,8 @@ export default async function ProductDetailPage({ params }: Props) {
         <div className="space-y-6">
           <Badge>{product.category}</Badge>
           <div className="space-y-3">
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-950">{product.name}</h1>
-            <div className="flex items-center gap-3 text-sm text-slate-500">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">{product.name}</h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 sm:gap-3">
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                 <span>{product.rating.toFixed(1)}</span>
@@ -100,7 +97,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 <p className="mt-2 font-semibold text-slate-950">Hawari Official</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <AddToCartButton product={product} />
               <WishlistButton productId={product.id} />
             </div>
@@ -142,7 +139,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
         <div className="space-y-5">
           <h2 className="text-2xl font-semibold text-slate-950">Produk terkait</h2>
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-5">
             {relatedProducts.map((relatedProduct) => (
               <ProductCard key={relatedProduct.id} product={relatedProduct} />
             ))}

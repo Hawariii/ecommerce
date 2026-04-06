@@ -7,16 +7,16 @@ import { Badge } from "@/components/ui/badge";
 export function HeroSection() {
   return (
     <section className="px-4 pt-8 sm:px-6 lg:px-8">
-      <div className="relative mx-auto grid max-w-7xl gap-8 overflow-hidden rounded-[40px] border border-white/70 bg-[linear-gradient(135deg,#fff8ef_0%,#ffffff_38%,#e8f5ff_100%)] p-8 shadow-[0_25px_80px_-40px_rgba(15,23,42,0.25)] lg:grid-cols-[1.2fr_0.8fr] lg:p-12">
+      <div className="relative mx-auto grid max-w-7xl gap-6 overflow-hidden rounded-[32px] border border-white/70 bg-[linear-gradient(135deg,#fff8ef_0%,#ffffff_38%,#e8f5ff_100%)] p-5 shadow-[0_25px_80px_-40px_rgba(15,23,42,0.25)] sm:p-8 lg:grid-cols-[1.2fr_0.8fr] lg:gap-8 lg:rounded-[40px] lg:p-12">
         <div className="absolute -left-16 top-12 h-44 w-44 rounded-full bg-orange-200/40 blur-3xl" />
         <div className="absolute bottom-8 right-4 h-56 w-56 rounded-full bg-sky-200/40 blur-3xl" />
         <div className="space-y-6">
           <Badge>Campaign April 2026</Badge>
           <div className="space-y-4">
-            <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+            <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
               Belanja secepat marketplace modern, dengan pengalaman checkout yang lebih rapi.
             </h1>
-            <p className="max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+            <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-lg sm:leading-8">
               Temukan flash sale, produk unggulan, dan katalog lintas kategori dalam storefront yang mobile-first dan
               siap scale.
             </p>
@@ -54,7 +54,7 @@ export function HeroSection() {
         <div className="relative grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
           <div className="rounded-[28px] bg-[linear-gradient(145deg,#0f172a,#1e293b)] p-6 text-white shadow-xl shadow-slate-950/15">
             <p className="text-sm text-slate-300">Flash sale live</p>
-            <p className="mt-3 text-3xl font-semibold">Hingga 35%</p>
+            <p className="mt-3 text-2xl font-semibold sm:text-3xl">Hingga 35%</p>
             <p className="mt-2 text-sm leading-7 text-slate-300">
               Promo elektronik, beauty, dan home essentials dengan stok terbatas.
             </p>
@@ -75,7 +75,7 @@ export function HeroSection() {
           </div>
           <div className="rounded-[28px] bg-[linear-gradient(145deg,#f97316,#fb923c)] p-6 text-white shadow-xl shadow-orange-500/20">
             <p className="text-sm text-orange-100">Merchant tools</p>
-            <p className="mt-3 text-3xl font-semibold">Admin-ready</p>
+            <p className="mt-3 text-2xl font-semibold sm:text-3xl">Admin-ready</p>
             <p className="mt-2 text-sm leading-7 text-orange-100">
               Pantau order, inventory, dan performa penjualan dalam satu dashboard.
             </p>
