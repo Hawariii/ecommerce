@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
@@ -7,16 +6,6 @@ import { Providers } from "@/components/layout/providers";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/constants";
 
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hawari-commerce.local"),
@@ -33,10 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="id"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="id" className="h-full antialiased">
       <body className="min-h-full bg-[#fffaf3] text-slate-950">
         <Providers>
           <div className="flex min-h-screen flex-col">
