@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fffaf3;
-  --foreground: #0f172a;
+  --background: #f7f8f4;
+  --foreground: #15202b;
 }
 
 @theme inline {
@@ -24,9 +24,9 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
   background-image:
-    radial-gradient(circle at top left, rgba(251, 191, 36, 0.14), transparent 26%),
-    radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 250, 243, 0.96));
+    radial-gradient(circle at top left, rgba(16, 185, 129, 0.14), transparent 28%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(247, 248, 244, 0.98));
   background-attachment: fixed;
 }
 
@@ -48,6 +48,6 @@ textarea {
 }
 
 ::selection {
-  background: #fdba74;
-  color: #431407;
+  background: #86efac;
+  color: #052e16;
 }

@@ -114,6 +114,24 @@ export async function getCategories() {
   return categories;
 }
 
+export async function getSearchSuggestions() {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("products");
+
+  if (prisma) {
+    const items = await prisma.product.findMany({
+      select: { name: true },
+      orderBy: [{ soldCount: "desc" }, { rating: "desc" }],
+      take: 8,
+    });
+
+    return items.map((item) => item.name);
+  }
+
+  return products.slice(0, 8).map((product) => product.name);
+}
+
 export async function getHomePageData() {
   "use cache";
   cacheLife("minutes");
