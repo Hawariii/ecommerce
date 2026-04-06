@@ -3,9 +3,11 @@ import { ProductCard } from "@/components/product/product-card";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { products } from "@/lib/sample-data";
+import { getAdminProducts } from "@/lib/data";
 
-export default function AdminProductsPage() {
+export default async function AdminProductsPage() {
+  const products = await getAdminProducts();
+
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[360px_1fr] lg:px-8">
       <Card className="h-fit p-6">

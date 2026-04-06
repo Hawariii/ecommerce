@@ -1,8 +1,10 @@
+import { auth } from "@/lib/auth";
 import { OrdersTable } from "@/components/account/orders-table";
-import { getOrderHistory } from "@/lib/data";
+import { getUserOrderHistory } from "@/lib/data";
 
 export default async function OrdersPage() {
-  const orders = await getOrderHistory();
+  const session = await auth();
+  const orders = await getUserOrderHistory(session?.user.id);
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">

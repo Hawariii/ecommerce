@@ -1,8 +1,12 @@
+import { auth } from "@/lib/auth";
+import { getWishlistProducts } from "@/lib/data";
 import { ProductCard } from "@/components/product/product-card";
 import { Card } from "@/components/ui/card";
-import { products } from "@/lib/sample-data";
 
-export default function WishlistPage() {
+export default async function WishlistPage() {
+  const session = await auth();
+  const products = await getWishlistProducts(session?.user.id);
+
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
       <div>
