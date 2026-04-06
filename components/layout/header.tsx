@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart, Search, ShoppingCart, Store } from "lucide-react";
+import { Heart, Search, ShoppingCart, Sparkles, Store } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-white/60 bg-[#fffaf3]/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0f172a,#334155)] text-white shadow-lg shadow-slate-950/10">
             <Store className="h-5 w-5" />
           </span>
           <div>
@@ -24,7 +24,7 @@ export function Header() {
             <Input
               name="search"
               placeholder="Cari produk, brand, atau kategori..."
-              className="border-slate-200 bg-white pl-10"
+              className="rounded-full border-white/70 bg-white/90 pl-10 shadow-sm"
             />
           </div>
         </form>
@@ -44,11 +44,22 @@ export function Header() {
           </Link>
         </nav>
 
+        <div className="hidden items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-2 text-xs font-medium text-slate-600 xl:flex">
+          <Sparkles className="h-4 w-4 text-orange-500" />
+          <span>Flash sale live</span>
+        </div>
+
         <div className="flex items-center gap-2">
-          <Link href="/wishlist" className="rounded-full p-2 text-slate-600 hover:bg-white">
+          <Link
+            href="/wishlist"
+            className="rounded-full border border-white/60 bg-white/70 p-2 text-slate-600 shadow-sm hover:-translate-y-0.5 hover:bg-white"
+          >
             <Heart className="h-5 w-5" />
           </Link>
-          <Link href="/cart" className="rounded-full p-2 text-slate-600 hover:bg-white">
+          <Link
+            href="/cart"
+            className="rounded-full border border-white/60 bg-white/70 p-2 text-slate-600 shadow-sm hover:-translate-y-0.5 hover:bg-white"
+          >
             <ShoppingCart className="h-5 w-5" />
           </Link>
           <Button variant="dark" size="sm" asChild>

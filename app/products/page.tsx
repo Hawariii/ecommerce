@@ -31,16 +31,25 @@ export default async function ProductsPage({
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
-      <div className="space-y-3">
-        <p className="text-sm uppercase tracking-[0.2em] text-orange-600">Katalog</p>
-        <h1 className="text-4xl font-semibold tracking-tight text-slate-950">Semua produk</h1>
-        <p className="max-w-2xl text-sm leading-7 text-slate-600">
-          Search bar, filter kategori, rating minimum, dan sorting untuk skenario marketplace berskala besar.
-        </p>
+      <div className="relative overflow-hidden rounded-[36px] border border-white/70 bg-[linear-gradient(135deg,#fffdf8,#ffffff_45%,#eef7ff)] p-8 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.25)]">
+        <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-orange-200/35 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-36 w-36 rounded-full bg-sky-200/35 blur-3xl" />
+        <div className="relative space-y-3">
+          <p className="text-sm uppercase tracking-[0.2em] text-orange-600">Katalog</p>
+          <h1 className="text-4xl font-semibold tracking-tight text-slate-950">Semua produk</h1>
+          <p className="max-w-2xl text-sm leading-7 text-slate-600">
+            Discovery dibuat cepat dan bersih: search, filter, sorting, dan pagination dalam satu flow yang enak dipakai.
+          </p>
+          <div className="flex flex-wrap gap-3 pt-2 text-xs font-medium text-slate-600">
+            <span className="rounded-full bg-white/80 px-3 py-2 shadow-sm">Realtime search-ready</span>
+            <span className="rounded-full bg-white/80 px-3 py-2 shadow-sm">Server rendered filters</span>
+            <span className="rounded-full bg-white/80 px-3 py-2 shadow-sm">SEO-friendly catalog</span>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
-        <Card className="h-fit p-5">
+        <Card className="h-fit border-white/70 bg-white/85 p-5 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.35)] backdrop-blur lg:sticky lg:top-24">
           <form className="space-y-4">
             <Input
               name="search"
@@ -83,7 +92,15 @@ export default async function ProductsPage({
         </Card>
 
         <div className="space-y-6">
-          <p className="text-sm text-slate-500">Menampilkan {result.total} produk</p>
+          <div className="flex flex-col gap-2 rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm text-slate-500">Menampilkan {result.total} produk</p>
+              <p className="mt-1 text-lg font-semibold text-slate-950">
+                Kurasi katalog dengan visual marketplace yang lebih premium
+              </p>
+            </div>
+            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Page {result.currentPage}</div>
+          </div>
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {result.items.map((product) => (
               <ProductCard key={product.id} product={product} />

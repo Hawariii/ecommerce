@@ -12,15 +12,16 @@ export function ProductCard({ product }: { product: Product }) {
   const activePrice = product.flashSalePrice ?? product.price;
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="group overflow-hidden border-white/70 bg-white/85 shadow-[0_20px_45px_-30px_rgba(15,23,42,0.35)] backdrop-blur">
       <Link href={`/products/${product.slug}`} className="block">
         <div className="relative h-64 overflow-hidden bg-slate-100">
           <Image
             src={product.images[0]}
             alt={product.name}
             fill
-            className="object-cover transition duration-500 hover:scale-105"
+            className="object-cover transition duration-500 group-hover:scale-105"
           />
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/25 to-transparent" />
         </div>
       </Link>
       <div className="space-y-4 p-5">
@@ -48,6 +49,11 @@ export function ProductCard({ product }: { product: Product }) {
           {product.compareAtPrice ? (
             <p className="text-sm text-slate-400 line-through">{formatCurrency(product.compareAtPrice)}</p>
           ) : null}
+        </div>
+
+        <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2 text-xs text-slate-500">
+          <span>Stok {product.stock}</span>
+          <span>{product.tags[0] ?? "featured"}</span>
         </div>
 
         <Button className="w-full" asChild>
