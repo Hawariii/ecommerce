@@ -14,12 +14,15 @@ export default function CheckoutPage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
       <form action={checkoutAction} className="space-y-8">
-        <div>
+        <div className="overflow-hidden rounded-[32px] border border-white/70 bg-[linear-gradient(135deg,#f4fff7,#ffffff_55%,#eef7ff)] p-8 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.25)]">
           <p className="text-sm uppercase tracking-[0.2em] text-orange-600">Checkout</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">Alamat & pembayaran</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+            Form dibuat singkat untuk menjaga momentum checkout tetap tinggi di mobile maupun desktop.
+          </p>
         </div>
 
-        <Card className="grid gap-4 p-6 md:grid-cols-2">
+        <Card className="grid gap-4 border-white/70 bg-white/85 p-6 shadow-sm backdrop-blur md:grid-cols-2">
           <Input name="fullName" placeholder="Nama lengkap" />
           <Input name="phone" placeholder="Nomor telepon" />
           <Input name="addressLine1" placeholder="Alamat utama" className="md:col-span-2" />
@@ -35,7 +38,7 @@ export default function CheckoutPage() {
         </button>
       </form>
 
-      <Card className="h-fit p-6">
+      <Card className="h-fit border-white/70 bg-white/85 p-6 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.35)] backdrop-blur lg:sticky lg:top-24">
         <h2 className="text-lg font-semibold text-slate-950">Ringkasan pesanan</h2>
         <div className="mt-6 space-y-4 text-sm text-slate-600">
           <div className="flex justify-between">
@@ -50,6 +53,9 @@ export default function CheckoutPage() {
             <span>Total</span>
             <span>{formatCurrency(1819000 + SHIPPING_COST)}</span>
           </div>
+        </div>
+        <div className="mt-5 rounded-[22px] bg-slate-50 px-4 py-4 text-xs text-slate-600">
+          Pembayaran diproses dengan Stripe dan siap dihubungkan ke webhook untuk status order otomatis.
         </div>
       </Card>
     </div>

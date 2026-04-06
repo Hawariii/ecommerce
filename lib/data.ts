@@ -451,6 +451,10 @@ export async function getAdminUsers() {
 }
 
 export async function getWishlistProducts(userId?: string) {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("wishlist");
+
   if (prisma && userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },

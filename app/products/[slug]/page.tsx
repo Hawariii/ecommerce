@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ShieldCheck, Star, Truck } from "lucide-react";
+import { ShieldCheck, Star, Store, Truck } from "lucide-react";
 
 import { AddToCartButton } from "@/components/product/add-to-cart-button";
 import { ProductCard } from "@/components/product/product-card";
+import { WishlistButton } from "@/components/product/wishlist-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getProductBySlug, getRelatedProducts } from "@/lib/data";
@@ -43,12 +44,18 @@ export default async function ProductDetailPage({ params }: Props) {
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-12 px-4 py-10 sm:px-6 lg:px-8">
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-4">
-          <div className="relative h-[440px] overflow-hidden rounded-[32px] bg-white">
+          <div className="relative h-[440px] overflow-hidden rounded-[32px] border border-white/70 bg-white/85 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.35)]">
             <Image src={product.images[0]} alt={product.name} fill className="object-cover" priority />
+            <div className="absolute left-5 top-5">
+              <Badge className="bg-white/85 text-slate-700">{product.tags[0] ?? "featured"}</Badge>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {product.images.map((image) => (
-              <div key={image} className="relative h-40 overflow-hidden rounded-[24px] bg-white">
+              <div
+                key={image}
+                className="relative h-40 overflow-hidden rounded-[24px] border border-white/70 bg-white/80 shadow-sm"
+              >
                 <Image src={image} alt={product.name} fill className="object-cover" />
               </div>
             ))}
@@ -71,7 +78,7 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
           </div>
 
-          <Card className="space-y-3 p-6">
+          <Card className="space-y-4 border-white/70 bg-white/85 p-6 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.35)] backdrop-blur">
             <div className="flex items-end gap-3">
               <p className="text-3xl font-semibold text-slate-950">{formatCurrency(activePrice)}</p>
               {product.compareAtPrice ? (
@@ -79,29 +86,45 @@ export default async function ProductDetailPage({ params }: Props) {
               ) : null}
             </div>
             <p className="text-sm leading-7 text-slate-600">{product.description}</p>
-            <p className="text-sm text-slate-500">Stok tersedia: {product.stock}</p>
-            <AddToCartButton product={product} />
+            <div className="grid gap-3 rounded-[24px] bg-slate-50 p-4 text-sm text-slate-600 sm:grid-cols-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.14em] text-slate-400">Stok</p>
+                <p className="mt-2 font-semibold text-slate-950">{product.stock} unit</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.14em] text-slate-400">Kategori</p>
+                <p className="mt-2 font-semibold text-slate-950">{product.category}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.14em] text-slate-400">Merchant</p>
+                <p className="mt-2 font-semibold text-slate-950">Hawari Official</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <AddToCartButton product={product} />
+              <WishlistButton productId={product.id} />
+            </div>
           </Card>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <Card className="p-4">
+            <Card className="border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur">
               <Truck className="h-5 w-5 text-orange-500" />
               <p className="mt-3 text-sm font-semibold text-slate-950">Kirim cepat</p>
             </Card>
-            <Card className="p-4">
+            <Card className="border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur">
               <ShieldCheck className="h-5 w-5 text-emerald-500" />
               <p className="mt-3 text-sm font-semibold text-slate-950">Garansi resmi</p>
             </Card>
-            <Card className="p-4">
-              <Star className="h-5 w-5 text-amber-500" />
-              <p className="mt-3 text-sm font-semibold text-slate-950">Top rated</p>
+            <Card className="border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur">
+              <Store className="h-5 w-5 text-sky-500" />
+              <p className="mt-3 text-sm font-semibold text-slate-950">Official seller</p>
             </Card>
           </div>
         </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-        <Card className="p-6">
+        <Card className="border-white/70 bg-white/85 p-6 shadow-sm backdrop-blur">
           <h2 className="text-2xl font-semibold text-slate-950">Review & rating</h2>
           <div className="mt-6 space-y-4">
             {product.reviews.map((review) => (

@@ -14,8 +14,9 @@ export function CartSummary() {
   const total = subtotal + (items.length ? SHIPPING_COST : 0);
 
   return (
-    <Card className="p-6">
+    <Card className="border-white/70 bg-white/85 p-6 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.35)] backdrop-blur lg:sticky lg:top-24">
       <h2 className="text-lg font-semibold text-slate-950">Ringkasan Belanja</h2>
+      <p className="mt-2 text-sm text-slate-500">Checkout ringkas dengan breakdown biaya yang mudah dipindai.</p>
       <div className="mt-6 space-y-4 text-sm text-slate-600">
         <div className="flex justify-between">
           <span>Subtotal</span>
@@ -29,6 +30,9 @@ export function CartSummary() {
           <span>Total</span>
           <span>{formatCurrency(total)}</span>
         </div>
+      </div>
+      <div className="mt-5 rounded-[22px] bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-700">
+        Benefit: free insurance untuk order elektronik tertentu.
       </div>
       <Button className="mt-6 w-full" disabled={!items.length} asChild>
         <Link href="/checkout">Lanjut ke Checkout</Link>
