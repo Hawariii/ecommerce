@@ -7,7 +7,7 @@ export default async function Home() {
   const data = await getHomePageData();
 
   return (
-    <div className="pb-16">
+    <div className="pb-10">
       <HeroSection />
       <CategoryGrid categories={data.categories} />
       <ProductShowcase

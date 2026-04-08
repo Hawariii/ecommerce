@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart, Search, ShoppingCart, Sparkles, Store } from "lucide-react";
+import { Heart, Search, ShoppingCart, Store } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,15 +48,7 @@ export async function Header() {
           <Link href="/account" className="hover:text-slate-950">
             Akun
           </Link>
-          <Link href="/admin" className="hover:text-slate-950">
-            Admin
-          </Link>
         </nav>
-
-        <div className="hidden items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-2 text-xs font-medium text-slate-600 xl:flex">
-          <Sparkles className="h-4 w-4 text-emerald-500" />
-          <span>Search suggestion aktif</span>
-        </div>
 
         <div className="ml-auto flex items-center gap-2">
           <Link
