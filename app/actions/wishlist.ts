@@ -3,46 +3,35 @@
 import { revalidateTag } from "next/cache";
 
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function toggleWishlistAction(productId: string) {
   const session = await auth();
 
-  if (!session?.user.id || !prisma) {
+  if (!session?.user.id || !supabase) {
     return { status: "unauthorized" as const };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      wishlist: {
-        where: { id: productId },
-        select: { id: true },
-      },
-    },
-  });
+  const { data: wishlistItem } = await supabase
+    .from("_WishlistUsers")
+    .select("A")
+    .eq("A", productId)
+    .eq("B", session.user.id)
+    .maybeSingle();
 
-  if (user?.wishlist.length) {
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        wishlist: {
-          disconnect: { id: productId },
-        },
-      },
+  if (wishlistItem) {
+    await supabase.from("_WishlistUsers").delete().match({
+      A: productId,
+      B: session.user.id,
     });
 
     revalidateTag("wishlist", "max");
     return { status: "removed" as const };
   }
 
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: {
-      wishlist: {
-        connect: { id: productId },
-      },
-    },
+  await supabase.from("_WishlistUsers").insert({
+    A: productId,
+    B: session.user.id,
   });
 
   revalidateTag("wishlist", "max");

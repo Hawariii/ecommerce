@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 
-import { prisma } from "@/lib/prisma";
 import { dashboardStats, categories, orderHistory, products } from "@/lib/sample-data";
+import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import type { Category, DashboardStat, OrderSummary, Product, Review } from "@/types";
 
@@ -15,8 +15,59 @@ type ProductQuery = {
   rating?: number;
 };
 
+type CategoryRow = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+};
+
+type ProductRow = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number | string;
+  compareAtPrice: number | string | null;
+  flashSalePrice: number | string | null;
+  stock: number;
+  soldCount: number;
+  rating: number;
+  reviewCount: number;
+  featured: boolean;
+  flashSale: boolean;
+  tags: string[] | null;
+  images: string[] | null;
+  Category?: CategoryRow | CategoryRow[] | null;
+};
+
+type ReviewRow = {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  User?: { name: string | null } | { name: string | null }[] | null;
+};
+
+type OrderWithItems = {
+  id: string;
+  createdAt: string;
+  status: string;
+  total: number | string;
+  OrderItem?: { id: string }[] | null;
+};
+
 function logDataError(scope: string, error: unknown) {
   console.error(`[data:${scope}]`, error);
+}
+
+function firstRelation<T>(value: T | T[] | null | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function toNumber(value: number | string | null | undefined) {
+  return value == null ? undefined : Number(value);
 }
 
 function getFallbackProducts(query: ProductQuery = {}) {
@@ -54,66 +105,40 @@ function getFallbackProducts(query: ProductQuery = {}) {
   };
 }
 
-function mapReview(review: {
-  id: string;
-  rating: number;
-  comment: string;
-  createdAt: Date;
-  user?: { name: string | null } | null;
-}): Review {
+function mapReview(review: ReviewRow): Review {
+  const user = firstRelation(review.User);
+
   return {
     id: review.id,
-    userName: review.user?.name ?? "User",
+    userName: user?.name ?? "User",
     rating: review.rating,
     comment: review.comment,
-    createdAt: review.createdAt.toISOString().slice(0, 10),
+    createdAt: review.createdAt.slice(0, 10),
   };
 }
 
-function mapProduct(product: {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  price: { toNumber(): number };
-  compareAtPrice: { toNumber(): number } | null;
-  flashSalePrice: { toNumber(): number } | null;
-  stock: number;
-  soldCount: number;
-  rating: number;
-  reviewCount: number;
-  featured: boolean;
-  flashSale: boolean;
-  tags: string[];
-  images: string[];
-  category: { name: string; slug: string };
-  reviews?: {
-    id: string;
-    rating: number;
-    comment: string;
-    createdAt: Date;
-    user?: { name: string | null } | null;
-  }[];
-}): Product {
+function mapProduct(product: ProductRow & { Review?: ReviewRow[] | null }): Product {
+  const category = firstRelation(product.Category);
+
   return {
     id: product.id,
     name: product.name,
     slug: product.slug,
     description: product.description,
-    price: product.price.toNumber(),
-    compareAtPrice: product.compareAtPrice?.toNumber(),
-    flashSalePrice: product.flashSalePrice?.toNumber(),
+    price: toNumber(product.price) ?? 0,
+    compareAtPrice: toNumber(product.compareAtPrice),
+    flashSalePrice: toNumber(product.flashSalePrice),
     stock: product.stock,
     soldCount: product.soldCount,
     rating: product.rating,
     reviewCount: product.reviewCount,
     featured: product.featured,
     flashSale: product.flashSale,
-    category: product.category.name,
-    categorySlug: product.category.slug,
-    tags: product.tags,
-    images: product.images,
-    reviews: product.reviews?.map(mapReview) ?? [],
+    category: category?.name ?? "Uncategorized",
+    categorySlug: category?.slug ?? "uncategorized",
+    tags: product.tags ?? [],
+    images: product.images ?? [],
+    reviews: product.Review?.map(mapReview) ?? [],
   };
 }
 
@@ -125,29 +150,48 @@ function mapOrderStatus(status: string): OrderSummary["status"] {
   return "Delivered";
 }
 
+async function fetchProductsByIds(ids: string[]) {
+  if (!supabase || ids.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("Product")
+    .select("*, Category(name, slug)")
+    .in("id", ids);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((item) => mapProduct(item as ProductRow));
+}
+
 export async function getCategories() {
   "use cache";
   cacheLife("hours");
   cacheTag("categories");
 
-  if (prisma) {
+  if (supabase) {
     try {
-      const categoryList = await prisma.category.findMany({
-        include: {
-          _count: {
-            select: { products: true },
-          },
-        },
-        orderBy: { name: "asc" },
-      });
+      const [{ data: categoryList, error }, { data: productRows, error: countError }] = await Promise.all([
+        supabase.from("Category").select("id,name,slug,description,image").order("name", { ascending: true }),
+        supabase.from("Product").select("categoryId"),
+      ]);
 
-      return categoryList.map<Category>((category) => ({
+      if (error) throw error;
+      if (countError) throw countError;
+
+      const productCounts = new Map<string, number>();
+      for (const row of productRows ?? []) {
+        productCounts.set(row.categoryId, (productCounts.get(row.categoryId) ?? 0) + 1);
+      }
+
+      return (categoryList ?? []).map<Category>((category) => ({
         id: category.id,
         name: category.name,
         slug: category.slug,
         description: category.description ?? "",
         image: category.image ?? "",
-        productCount: category._count.products,
+        productCount: productCounts.get(category.id) ?? 0,
       }));
     } catch (error) {
       logDataError("getCategories", error);
@@ -162,15 +206,17 @@ export async function getSearchSuggestions() {
   cacheLife("minutes");
   cacheTag("products");
 
-  if (prisma) {
+  if (supabase) {
     try {
-      const items = await prisma.product.findMany({
-        select: { name: true },
-        orderBy: [{ soldCount: "desc" }, { rating: "desc" }],
-        take: 8,
-      });
+      const { data, error } = await supabase
+        .from("Product")
+        .select("name")
+        .order("soldCount", { ascending: false })
+        .order("rating", { ascending: false })
+        .limit(8);
 
-      return items.map((item) => item.name);
+      if (error) throw error;
+      return (data ?? []).map((item) => item.name);
     } catch (error) {
       logDataError("getSearchSuggestions", error);
     }
@@ -184,34 +230,39 @@ export async function getHomePageData() {
   cacheLife("minutes");
   cacheTag("products");
 
-  if (prisma) {
+  if (supabase) {
     try {
-      const [categoryList, featuredProducts, flashSaleProducts, recommendationProducts] = await Promise.all([
+      const [categoryList, featuredResult, flashSaleResult, recommendationResult] = await Promise.all([
         getCategories(),
-        prisma.product.findMany({
-          where: { featured: true },
-          include: { category: true },
-          take: 4,
-          orderBy: [{ soldCount: "desc" }],
-        }),
-        prisma.product.findMany({
-          where: { flashSale: true },
-          include: { category: true },
-          take: 4,
-          orderBy: [{ soldCount: "desc" }],
-        }),
-        prisma.product.findMany({
-          include: { category: true },
-          take: 4,
-          orderBy: [{ rating: "desc" }, { reviewCount: "desc" }],
-        }),
+        supabase
+          .from("Product")
+          .select("*, Category(name, slug)")
+          .eq("featured", true)
+          .order("soldCount", { ascending: false })
+          .limit(4),
+        supabase
+          .from("Product")
+          .select("*, Category(name, slug)")
+          .eq("flashSale", true)
+          .order("soldCount", { ascending: false })
+          .limit(4),
+        supabase
+          .from("Product")
+          .select("*, Category(name, slug)")
+          .order("rating", { ascending: false })
+          .order("reviewCount", { ascending: false })
+          .limit(4),
       ]);
+
+      if (featuredResult.error) throw featuredResult.error;
+      if (flashSaleResult.error) throw flashSaleResult.error;
+      if (recommendationResult.error) throw recommendationResult.error;
 
       return {
         categories: categoryList,
-        featuredProducts: featuredProducts.map(mapProduct),
-        flashSaleProducts: flashSaleProducts.map(mapProduct),
-        recommendationProducts: recommendationProducts.map(mapProduct),
+        featuredProducts: (featuredResult.data ?? []).map((item) => mapProduct(item as ProductRow)),
+        flashSaleProducts: (flashSaleResult.data ?? []).map((item) => mapProduct(item as ProductRow)),
+        recommendationProducts: (recommendationResult.data ?? []).map((item) => mapProduct(item as ProductRow)),
       };
     } catch (error) {
       logDataError("getHomePageData", error);
@@ -231,52 +282,50 @@ export async function getProducts(query: ProductQuery = {}) {
   cacheLife("minutes");
   cacheTag("products");
 
-  const { page = 1, search = "", category, sort = "terlaris", minPrice = 0, maxPrice = Number.MAX_SAFE_INTEGER, rating = 0 } = query;
+  const {
+    page = 1,
+    search = "",
+    category,
+    sort = "terlaris",
+    minPrice = 0,
+    maxPrice = Number.MAX_SAFE_INTEGER,
+    rating = 0,
+  } = query;
 
-  if (prisma) {
+  if (supabase) {
     try {
       const pageSize = 4;
-      const where = {
-        name: {
-          contains: search,
-          mode: "insensitive" as const,
-        },
-        category: category
-          ? {
-              slug: category,
-            }
-          : undefined,
-        price: {
-          gte: minPrice,
-          lte: maxPrice,
-        },
-        rating: {
-          gte: rating,
-        },
-      };
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
 
-      const orderBy =
-        sort === "termurah"
-          ? [{ price: "asc" as const }]
-          : sort === "terbaru"
-            ? [{ createdAt: "desc" as const }]
-            : [{ soldCount: "desc" as const }];
+      let request = supabase
+        .from("Product")
+        .select("*, Category!inner(name, slug)", { count: "exact" })
+        .ilike("name", `%${search}%`)
+        .gte("price", minPrice)
+        .lte("price", maxPrice)
+        .gte("rating", rating)
+        .range(from, to);
 
-      const [items, total] = await Promise.all([
-        prisma.product.findMany({
-          where,
-          include: { category: true },
-          orderBy,
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-        }),
-        prisma.product.count({ where }),
-      ]);
+      if (category) {
+        request = request.eq("Category.slug", category);
+      }
+
+      if (sort === "termurah") {
+        request = request.order("price", { ascending: true });
+      } else if (sort === "terbaru") {
+        request = request.order("createdAt", { ascending: false });
+      } else {
+        request = request.order("soldCount", { ascending: false });
+      }
+
+      const { data, count, error } = await request;
+      if (error) throw error;
 
       return {
-        items: items.map(mapProduct),
-        total,
-        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+        items: (data ?? []).map((item) => mapProduct(item as ProductRow)),
+        total: count ?? 0,
+        totalPages: Math.max(1, Math.ceil((count ?? 0) / pageSize)),
         currentPage: page,
       };
     } catch (error) {
@@ -292,24 +341,31 @@ export async function getProductBySlug(slug: string) {
   cacheLife("minutes");
   cacheTag("products");
 
-  if (prisma) {
+  if (supabase) {
     try {
-      const product = await prisma.product.findUnique({
-        where: { slug },
-        include: {
-          category: true,
-          reviews: {
-            include: {
-              user: {
-                select: { name: true },
-              },
-            },
-            orderBy: { createdAt: "desc" },
-          },
-        },
-      });
+      const { data: product, error } = await supabase
+        .from("Product")
+        .select("*, Category(name, slug)")
+        .eq("slug", slug)
+        .maybeSingle();
 
-      return product ? mapProduct(product) : null;
+      if (error) throw error;
+      if (!product) return null;
+
+      const productRow = product as ProductRow;
+
+      const { data: reviews, error: reviewError } = await supabase
+        .from("Review")
+        .select("id,rating,comment,createdAt,User(name)")
+        .eq("productId", productRow.id)
+        .order("createdAt", { ascending: false });
+
+      if (reviewError) throw reviewError;
+
+      return mapProduct({
+        ...productRow,
+        Review: (reviews ?? []) as ReviewRow[],
+      });
     } catch (error) {
       logDataError("getProductBySlug", error);
     }
@@ -323,23 +379,18 @@ export async function getRelatedProducts(categorySlug: string, currentSlug: stri
   cacheLife("minutes");
   cacheTag("products");
 
-  if (prisma) {
+  if (supabase) {
     try {
-      const relatedProducts = await prisma.product.findMany({
-        where: {
-          category: {
-            slug: categorySlug,
-          },
-          NOT: {
-            slug: currentSlug,
-          },
-        },
-        include: { category: true },
-        take: 4,
-        orderBy: [{ soldCount: "desc" }],
-      });
+      const { data, error } = await supabase
+        .from("Product")
+        .select("*, Category!inner(name, slug)")
+        .eq("Category.slug", categorySlug)
+        .neq("slug", currentSlug)
+        .order("soldCount", { ascending: false })
+        .limit(4);
 
-      return relatedProducts.map(mapProduct);
+      if (error) throw error;
+      return (data ?? []).map((item) => mapProduct(item as ProductRow));
     } catch (error) {
       logDataError("getRelatedProducts", error);
     }
@@ -351,24 +402,22 @@ export async function getRelatedProducts(categorySlug: string, currentSlug: stri
 }
 
 export async function getOrderHistory() {
-  if (prisma) {
+  if (supabase) {
     try {
-      const orders = await prisma.order.findMany({
-        include: {
-          _count: {
-            select: { items: true },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 10,
-      });
+      const { data, error } = await supabase
+        .from("Order")
+        .select("id,createdAt,status,total,OrderItem(id)")
+        .order("createdAt", { ascending: false })
+        .limit(10);
 
-      return orders.map<OrderSummary>((order) => ({
+      if (error) throw error;
+
+      return ((data ?? []) as OrderWithItems[]).map<OrderSummary>((order) => ({
         id: order.id,
-        createdAt: order.createdAt.toISOString().slice(0, 10),
+        createdAt: order.createdAt.slice(0, 10),
         status: mapOrderStatus(order.status),
-        total: order.total.toNumber(),
-        items: order._count.items,
+        total: Number(order.total),
+        items: order.OrderItem?.length ?? 0,
       }));
     } catch (error) {
       logDataError("getOrderHistory", error);
@@ -379,25 +428,23 @@ export async function getOrderHistory() {
 }
 
 export async function getUserOrderHistory(userId?: string) {
-  if (prisma && userId) {
+  if (supabase && userId) {
     try {
-      const orders = await prisma.order.findMany({
-        where: { userId },
-        include: {
-          _count: {
-            select: { items: true },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 10,
-      });
+      const { data, error } = await supabase
+        .from("Order")
+        .select("id,createdAt,status,total,OrderItem(id)")
+        .eq("userId", userId)
+        .order("createdAt", { ascending: false })
+        .limit(10);
 
-      return orders.map<OrderSummary>((order) => ({
+      if (error) throw error;
+
+      return ((data ?? []) as OrderWithItems[]).map<OrderSummary>((order) => ({
         id: order.id,
-        createdAt: order.createdAt.toISOString().slice(0, 10),
+        createdAt: order.createdAt.slice(0, 10),
         status: mapOrderStatus(order.status),
-        total: order.total.toNumber(),
-        items: order._count.items,
+        total: Number(order.total),
+        items: order.OrderItem?.length ?? 0,
       }));
     } catch (error) {
       logDataError("getUserOrderHistory", error);
@@ -408,29 +455,24 @@ export async function getUserOrderHistory(userId?: string) {
 }
 
 export async function getDashboardStats() {
-  if (prisma) {
+  if (supabase) {
     try {
-      const [revenueAgg, activeOrders, productCount, newUsers] = await Promise.all([
-        prisma.order.aggregate({
-          _sum: { total: true },
-          where: {
-            status: {
-              in: ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"],
-            },
-          },
-        }),
-        prisma.order.count({
-          where: {
-            status: {
-              in: ["PENDING", "PAID", "PROCESSING", "SHIPPED"],
-            },
-          },
-        }),
-        prisma.product.count(),
-        prisma.user.count(),
+      const [ordersResult, activeOrdersResult, productResult, userResult] = await Promise.all([
+        supabase.from("Order").select("total").in("status", ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"]),
+        supabase
+          .from("Order")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["PENDING", "PAID", "PROCESSING", "SHIPPED"]),
+        supabase.from("Product").select("id", { count: "exact", head: true }),
+        supabase.from("User").select("id", { count: "exact", head: true }),
       ]);
 
-      const revenue = revenueAgg._sum.total?.toNumber() ?? 0;
+      if (ordersResult.error) throw ordersResult.error;
+      if (activeOrdersResult.error) throw activeOrdersResult.error;
+      if (productResult.error) throw productResult.error;
+      if (userResult.error) throw userResult.error;
+
+      const revenue = (ordersResult.data ?? []).reduce((sum, order) => sum + Number(order.total), 0);
 
       return [
         {
@@ -440,17 +482,17 @@ export async function getDashboardStats() {
         },
         {
           label: "Pesanan Aktif",
-          value: String(activeOrders),
+          value: String(activeOrdersResult.count ?? 0),
           description: "Order yang masih berjalan",
         },
         {
           label: "Produk Aktif",
-          value: String(productCount),
+          value: String(productResult.count ?? 0),
           description: "Total katalog yang tersedia",
         },
         {
           label: "Pelanggan",
-          value: String(newUsers),
+          value: String(userResult.count ?? 0),
           description: "Total user yang tersimpan",
         },
       ] satisfies DashboardStat[];
@@ -463,15 +505,16 @@ export async function getDashboardStats() {
 }
 
 export async function getAdminProducts() {
-  if (prisma) {
+  if (supabase) {
     try {
-      const items = await prisma.product.findMany({
-        include: { category: true },
-        orderBy: [{ createdAt: "desc" }],
-        take: 12,
-      });
+      const { data, error } = await supabase
+        .from("Product")
+        .select("*, Category(name, slug)")
+        .order("createdAt", { ascending: false })
+        .limit(12);
 
-      return items.map(mapProduct);
+      if (error) throw error;
+      return (data ?? []).map((item) => mapProduct(item as ProductRow));
     } catch (error) {
       logDataError("getAdminProducts", error);
     }
@@ -481,18 +524,16 @@ export async function getAdminProducts() {
 }
 
 export async function getAdminUsers() {
-  if (prisma) {
+  if (supabase) {
     try {
-      return await prisma.user.findMany({
-        orderBy: [{ createdAt: "desc" }],
-        take: 20,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-        },
-      });
+      const { data, error } = await supabase
+        .from("User")
+        .select("id,name,email,role")
+        .order("createdAt", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return data ?? [];
     } catch (error) {
       logDataError("getAdminUsers", error);
     }
@@ -509,37 +550,36 @@ export async function getWishlistProducts(userId?: string) {
   cacheLife("minutes");
   cacheTag("wishlist");
 
-  if (prisma && userId) {
+  if (supabase && userId) {
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: {
-          wishlist: {
-            include: { category: true },
-            orderBy: [{ createdAt: "desc" }],
-            take: 8,
-          },
-        },
-      });
+      const { data: wishlistRows, error } = await supabase
+        .from("_WishlistUsers")
+        .select("A")
+        .eq("B", userId)
+        .limit(8);
 
-      if (user?.wishlist.length) {
-        return user.wishlist.map(mapProduct);
+      if (error) throw error;
+
+      const wishlistProducts = await fetchProductsByIds((wishlistRows ?? []).map((row) => row.A));
+      if (wishlistProducts.length) {
+        return wishlistProducts;
       }
     } catch (error) {
       logDataError("getWishlistProducts:user", error);
     }
   }
 
-  if (prisma) {
+  if (supabase) {
     try {
-      const items = await prisma.product.findMany({
-        where: { featured: true },
-        include: { category: true },
-        take: 4,
-        orderBy: [{ rating: "desc" }],
-      });
+      const { data, error } = await supabase
+        .from("Product")
+        .select("*, Category(name, slug)")
+        .eq("featured", true)
+        .order("rating", { ascending: false })
+        .limit(4);
 
-      return items.map(mapProduct);
+      if (error) throw error;
+      return (data ?? []).map((item) => mapProduct(item as ProductRow));
     } catch (error) {
       logDataError("getWishlistProducts:fallback", error);
     }

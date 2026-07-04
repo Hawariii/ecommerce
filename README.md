@@ -1,6 +1,6 @@
 # Hawari Commerce
 
-E-commerce portfolio project bergaya marketplace modern, dibangun dengan Next.js App Router, Prisma, PostgreSQL, NextAuth, Stripe, Tailwind CSS, dan Zustand.
+E-commerce portfolio project bergaya marketplace modern, dibangun dengan Next.js App Router, Supabase, NextAuth, Stripe, Tailwind CSS, dan Zustand.
 
 ## Preview
 
@@ -15,7 +15,7 @@ E-commerce portfolio project bergaya marketplace modern, dibangun dengan Next.js
 - Next.js 16 App Router
 - TypeScript strict
 - Tailwind CSS v4
-- Prisma ORM + PostgreSQL
+- Supabase Postgres
 - NextAuth Credentials
 - Stripe checkout intent
 - Zustand for cart state
@@ -28,7 +28,7 @@ E-commerce portfolio project bergaya marketplace modern, dibangun dengan Next.js
 - Cart dan checkout flow
 - Auth demo berbasis database
 - Admin dashboard untuk stats, products, orders, dan users
-- Prisma seed untuk kategori, produk, order, dan akun demo
+- Supabase seed untuk kategori, produk, order, dan akun demo
 
 ## Demo Account
 
@@ -40,11 +40,14 @@ E-commerce portfolio project bergaya marketplace modern, dibangun dengan Next.js
 Buat file `.env`:
 
 ```env
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE_NAME?schema=public"
+SUPABASE_URL="https://PROJECT_REF.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 NEXTAUTH_SECRET="your-long-random-secret"
 NEXTAUTH_URL="http://localhost:3000"
 STRIPE_SECRET_KEY="sk_test_your_stripe_secret_key"
 ```
+
+Gunakan Project URL dan service role key dari Supabase Project Settings > API. Key ini server-only, jadi jangan expose sebagai `NEXT_PUBLIC_`.
 
 Template aman juga tersedia di `.env.example`.
 
@@ -52,11 +55,17 @@ Template aman juga tersedia di `.env.example`.
 
 ```bash
 npm install
-npx prisma migrate dev --name init
-npx prisma generate
 npm run db:seed
 npm run dev
 ```
+
+Untuk database Supabase yang masih kosong:
+
+1. Buka Supabase SQL Editor.
+2. Jalankan isi `supabase/schema.sql`.
+3. Isi `.env`.
+4. Jalankan `npm run db:seed`.
+5. Jalankan `npm run dev`.
 
 ## Scripts
 
@@ -67,11 +76,11 @@ npm run lint
 npm run db:seed
 ```
 
-## Prisma Notes
+## Supabase Notes
 
-- Prisma config berada di `prisma.config.ts`
-- Migration berada di `prisma/migrations`
-- Seed berada di `prisma/seed.ts`
+- Schema SQL berada di `supabase/schema.sql`
+- Seed berada di `supabase/seed.ts`
+- Runtime database client berada di `lib/supabase.ts`
 
 ## Status
 
@@ -79,7 +88,7 @@ Project ini sudah:
 
 - lint clean
 - production build sukses
-- connect ke PostgreSQL via Prisma
+- connect langsung ke Supabase Postgres
 - menggunakan data real dari database untuk storefront inti dan admin utama
 
 ## Next Improvements

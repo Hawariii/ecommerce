@@ -1,10 +1,9 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compareSync } from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 const fallbackUsers = [
   {
@@ -22,7 +21,6 @@ const fallbackUsers = [
 ];
 
 export const authOptions: NextAuthOptions = {
-  adapter: prisma ? PrismaAdapter(prisma) : undefined,
   session: {
     strategy: "jwt",
   },
@@ -41,12 +39,14 @@ export const authOptions: NextAuthOptions = {
         const password = credentials?.password;
         if (!email) return null;
 
-        if (prisma) {
-          const user = await prisma.user.findUnique({
-            where: { email },
-          });
+        if (supabase) {
+          const { data: user, error } = await supabase
+            .from("User")
+            .select("id,email,name,image,password,role")
+            .eq("email", email)
+            .maybeSingle();
 
-          if (!user) return null;
+          if (error || !user) return null;
           if (!user.password || !password || !compareSync(password, user.password)) {
             return null;
           }

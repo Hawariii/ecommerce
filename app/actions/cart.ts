@@ -3,7 +3,7 @@
 import { revalidateTag, updateTag } from "next/cache";
 
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function syncCartAction() {
   updateTag("cart");
@@ -13,33 +13,30 @@ export async function syncCartAction() {
 export async function addToCartAction(productId: string, quantity = 1) {
   const session = await auth();
 
-  if (!session?.user.id || !prisma) {
+  if (!session?.user.id || !supabase) {
     return;
   }
 
-  const existing = await prisma.cart.findUnique({
-    where: {
-      userId_productId: {
-        userId: session.user.id,
-        productId,
-      },
-    },
-  });
+  const { data: existing } = await supabase
+    .from("Cart")
+    .select("id,quantity")
+    .eq("userId", session.user.id)
+    .eq("productId", productId)
+    .maybeSingle();
 
   if (existing) {
-    await prisma.cart.update({
-      where: { id: existing.id },
-      data: {
+    await supabase
+      .from("Cart")
+      .update({
         quantity: existing.quantity + quantity,
-      },
-    });
+        updatedAt: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
   } else {
-    await prisma.cart.create({
-      data: {
+    await supabase.from("Cart").insert({
         userId: session.user.id,
         productId,
         quantity,
-      },
     });
   }
 
@@ -50,19 +47,20 @@ export async function addToCartAction(productId: string, quantity = 1) {
 export async function updateCartQuantityAction(productId: string, quantity: number) {
   const session = await auth();
 
-  if (!session?.user.id || !prisma) {
+  if (!session?.user.id || !supabase) {
     return;
   }
 
-  await prisma.cart.updateMany({
-    where: {
+  await supabase
+    .from("Cart")
+    .update({
+      quantity: Math.max(1, quantity),
+      updatedAt: new Date().toISOString(),
+    })
+    .match({
       userId: session.user.id,
       productId,
-    },
-    data: {
-      quantity: Math.max(1, quantity),
-    },
-  });
+    });
 
   updateTag("cart");
 }
@@ -70,15 +68,13 @@ export async function updateCartQuantityAction(productId: string, quantity: numb
 export async function removeFromCartAction(productId: string) {
   const session = await auth();
 
-  if (!session?.user.id || !prisma) {
+  if (!session?.user.id || !supabase) {
     return;
   }
 
-  await prisma.cart.deleteMany({
-    where: {
+  await supabase.from("Cart").delete().match({
       userId: session.user.id,
       productId,
-    },
   });
 
   updateTag("cart");

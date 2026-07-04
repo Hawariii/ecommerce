@@ -3,7 +3,7 @@
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/utils";
 
 export async function upsertProductAction(formData: FormData) {
@@ -16,31 +16,30 @@ export async function upsertProductAction(formData: FormData) {
     return;
   }
 
-  if (prisma) {
-    const fallbackCategory = await prisma.category.findFirst({
-      orderBy: { createdAt: "asc" },
-    });
+  if (supabase) {
+    const { data: fallbackCategory } = await supabase
+      .from("Category")
+      .select("id")
+      .order("createdAt", { ascending: true })
+      .limit(1)
+      .maybeSingle();
 
     if (!fallbackCategory) {
       return;
     }
 
     const baseSlug = slugify(name);
-    const existingCount = await prisma.product.count({
-      where: {
-        slug: {
-          startsWith: baseSlug,
-        },
-      },
-    });
+    const { count: existingCount } = await supabase
+      .from("Product")
+      .select("id", { count: "exact", head: true })
+      .like("slug", `${baseSlug}%`);
 
-    await prisma.product.create({
-      data: {
+    await supabase.from("Product").insert({
         name,
         slug: existingCount ? `${baseSlug}-${existingCount + 1}` : baseSlug,
         description: description || `Produk baru ${name} siap tayang di katalog.`,
-        price: String(Math.max(price, 10000)),
-        compareAtPrice: String(Math.max(price || 10000, 10000) + 50000),
+        price: Math.max(price, 10000),
+        compareAtPrice: Math.max(price || 10000, 10000) + 50000,
         sku: `SKU-${Date.now()}`,
         stock: Math.max(stock, 1),
         soldCount: 0,
@@ -53,7 +52,6 @@ export async function upsertProductAction(formData: FormData) {
           "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop",
         ],
         categoryId: fallbackCategory.id,
-      },
     });
   }
 
